@@ -33,6 +33,9 @@ func (f Fraction) Denominator() int {
 }
 
 func Create(numerator int, denominator int) Fraction {
+	if denominator == 0 {
+		panic("divide by zero.")
+	}
 	return Fraction{numerator: numerator, denominator: denominator}.normalize()
 }
 
