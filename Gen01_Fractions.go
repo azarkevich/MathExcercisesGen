@@ -1,7 +1,7 @@
 package main
 
 import (
-	"MathExercisesGenerator/docs/fractions"
+	"MathExercisesGenerator/fractions"
 	"fmt"
 	"math/rand"
 	"time"
@@ -33,8 +33,8 @@ var Gen01_FractionsOptions = Gen01_FractionsOptionsStruct{
 	MinDenominator:         2,
 	MaxDenominator:         23,
 	ShowSolutionInPlace:    true,
-	EquationsCount:         5,
-	RandomSeed:             1676400,
+	EquationsCount:         6,
+	RandomSeed:             1,
 }
 
 func drawFraction(f fractions.Fraction) {
@@ -117,7 +117,11 @@ func Gen01_Fractions() {
 		}
 
 		// evaluate
-		solution := fractions.Summ(equation...)
+
+		solution := equation[0]
+		for _, other := range equation[1:] {
+			solution = solution.Add(other)
+		}
 
 		// too complex solution
 		if solution.Denominator() > Gen01_FractionsOptions.MaxSolutionDenominator {

@@ -12,6 +12,13 @@ type Fraction struct {
 	denominator int
 }
 
+var Zero Fraction = Fraction{
+	isNegative:  false,
+	integerPart: 0,
+	numerator:   0,
+	denominator: 1,
+}
+
 func (f Fraction) IsNegative() bool {
 	return f.isNegative
 }
@@ -79,6 +86,10 @@ func (f Fraction) normalize() (ret Fraction) {
 	}
 
 	ret.denominator = f.denominator
+	if ret.denominator < 0 {
+		ret.denominator = -ret.denominator
+		ret.isNegative = !ret.isNegative
+	}
 
 	for ret.numerator >= ret.denominator {
 
@@ -91,6 +102,10 @@ func (f Fraction) normalize() (ret Fraction) {
 	if gcd > 1 {
 		ret.numerator /= gcd
 		ret.denominator /= gcd
+	}
+
+	if ret.numerator == 0 && ret.integerPart == 0 {
+		ret = Zero
 	}
 
 	return
@@ -130,6 +145,35 @@ func lcm(num1, num2 int) (lcm int) {
 	}
 }
 
+func (f Fraction) Abs() Fraction {
+
+	if f.IsNegative() {
+		return Fraction{
+			isNegative:  false,
+			integerPart: f.integerPart,
+			numerator:   f.numerator,
+			denominator: f.denominator,
+		}
+	}
+
+	return f
+}
+
+func (f Fraction) Neg() Fraction {
+
+	if f == Zero {
+		return f
+	}
+
+	return Fraction{
+		isNegative:  !f.isNegative,
+		integerPart: f.integerPart,
+		numerator:   f.numerator,
+		denominator: f.denominator,
+	}
+
+}
+
 func (f Fraction) Add(other Fraction) Fraction {
 
 	numerator, denominator := f.denormalize()
@@ -146,13 +190,31 @@ func (f Fraction) Add(other Fraction) Fraction {
 	return ret
 }
 
-func Summ(nums ...Fraction) Fraction {
+func (f Fraction) Sub(other Fraction) Fraction {
 
-	accum := nums[0]
-	for _, other := range nums[1:] {
-		accum = accum.Add(other)
-	}
-	return accum
+	return f.Add(other.Neg())
+
+}
+
+func (f Fraction) Reciprocal() Fraction {
+
+	numerator, denominator := f.denormalize()
+	return Create(denominator, numerator)
+
+}
+
+func (f Fraction) Mul(other Fraction) Fraction {
+
+	numerator, denominator := f.denormalize()
+	otherNumerator, otherDenominator := other.denormalize()
+
+	return Create(numerator*otherNumerator, denominator*otherDenominator)
+}
+
+func (f Fraction) Div(other Fraction) Fraction {
+
+	return f.Mul(other.Reciprocal())
+
 }
 
 // Stringer interface
