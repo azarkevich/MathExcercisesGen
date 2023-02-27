@@ -10,10 +10,7 @@ import (
 // LaTeX to PDF with https://www.overleaf.com/
 
 type Gen01_FractionsOptionsStruct struct {
-	NoNegativeResults      bool
 	MaxSolutionDenominator int
-	MinPartiesCount        int
-	MaxPartiesCount        int
 	MinNumerator           int
 	MaxNumerator           int
 	MinDenominator         int
@@ -24,35 +21,29 @@ type Gen01_FractionsOptionsStruct struct {
 }
 
 var Gen01_FractionsOptions = Gen01_FractionsOptionsStruct{
-	NoNegativeResults:      true,
 	MaxSolutionDenominator: 50,
-	MinPartiesCount:        2,
-	MaxPartiesCount:        3,
 	MinNumerator:           1,
 	MaxNumerator:           17,
 	MinDenominator:         2,
 	MaxDenominator:         23,
-	ShowSolutionInPlace:    true,
-	EquationsCount:         6,
+	ShowSolutionInPlace:    false,
+	EquationsCount:         5,
 	RandomSeed:             1,
 }
 
-func drawFraction(f fractions.Fraction) {
+func drawFraction(f fractions.Fraction, negInParens bool) {
 	if f.IsNegative() {
-		fmt.Print(" - ")
-	} else {
-		fmt.Print(" + ")
-	}
-
-	drawFractionNoSign(f)
-}
-
-func drawSoleFraction(f fractions.Fraction) {
-	if f.IsNegative() {
+		if negInParens {
+			fmt.Print(" ( ")
+		}
 		fmt.Print(" - ")
 	}
 
 	drawFractionNoSign(f)
+
+	if f.IsNegative() && negInParens {
+		fmt.Print(" ) ")
+	}
 }
 
 func drawFractionNoSign(f fractions.Fraction) {
@@ -95,32 +86,44 @@ func Gen01_Fractions() {
 
 	for eqInd < Gen01_FractionsOptions.EquationsCount {
 
-		fractionsCount := Gen01_FractionsOptions.MinPartiesCount
+		var createRandomFraction = func() fractions.Fraction {
 
-		if Gen01_FractionsOptions.MaxPartiesCount > Gen01_FractionsOptions.MinPartiesCount {
-			fractionsCount = Gen01_FractionsOptions.MinPartiesCount + rand.Intn(Gen01_FractionsOptions.MaxPartiesCount-Gen01_FractionsOptions.MinPartiesCount+1)
-		}
-
-		equation := make([]fractions.Fraction, fractionsCount)
-
-		for f := 0; f < len(equation); f++ {
 			numerator := Gen01_FractionsOptions.MinNumerator + rand.Intn(Gen01_FractionsOptions.MaxNumerator-Gen01_FractionsOptions.MinNumerator)
 			denominator := Gen01_FractionsOptions.MinDenominator + rand.Intn(Gen01_FractionsOptions.MaxDenominator-Gen01_FractionsOptions.MinDenominator)
 
-			if f > 0 && rand.Intn(2) == 1 {
-				numerator = -numerator
-			}
-
 			fraction := fractions.Create(numerator, denominator)
 
-			equation[f] = fraction
+			if rand.Intn(2) == 1 {
+				fraction = fraction.Neg()
+			}
+
+			return fraction
 		}
 
-		// evaluate
+		fraction1 := createRandomFraction()
+		fraction2 := createRandomFraction()
 
-		solution := equation[0]
-		for _, other := range equation[1:] {
-			solution = solution.Add(other)
+		var solution fractions.Fraction
+
+		var op string
+		// random operation
+		switch rand.Intn(4) {
+		case 0:
+			op = "+"
+			solution = fraction1.Add(fraction2)
+		case 1:
+			op = "-"
+			solution = fraction1.Sub(fraction2)
+		case 2:
+			op = "*"
+			solution = fraction1.Mul(fraction2)
+		case 3:
+			op = ":"
+			// do not allow divide by 0
+			for fraction2 == fractions.Zero {
+				fraction2 = createRandomFraction()
+			}
+			solution = fraction1.Div(fraction2)
 		}
 
 		// too complex solution
@@ -128,28 +131,28 @@ func Gen01_Fractions() {
 			continue
 		}
 
-		if solution.IsNegative() && Gen01_FractionsOptions.NoNegativeResults {
-			// skip this equation, because it generate negative result
-			continue
-		}
-
 		// draw equation
-		fmt.Printf("{\\small\\textbf %d.} ", eqInd+1)
+		fmt.Printf("{\\small\\textbf %d)} ", eqInd+1)
 		fmt.Print("$")
 
-		for f := 0; f < len(equation); f++ {
-			if f == 0 {
-				drawSoleFraction(equation[f])
-			} else {
-				drawFraction(equation[f])
-			}
+		drawFraction(fraction1, false)
+
+		if op == "*" {
+			fmt.Print(" \\times ")
+		} else if op == ":" {
+			fmt.Print(" \\div ")
+		} else {
+			fmt.Printf(" %v ", op)
 		}
+
+		drawFraction(fraction2, true)
+
 		fmt.Print(" = ")
 
 		solutions[eqInd] = solution
 
 		if Gen01_FractionsOptions.ShowSolutionInPlace {
-			drawSoleFraction(solution)
+			drawFraction(solution, false)
 		}
 		fmt.Println("$")
 
@@ -168,8 +171,8 @@ func Gen01_Fractions() {
 		fmt.Println("")
 
 		for i := 0; i < len(solutions); i++ {
-			fmt.Printf("{\\small\\textbf %d.} $", i+1)
-			drawSoleFraction(solutions[i])
+			fmt.Printf("{\\small\\textbf %d)} $", i+1)
+			drawFraction(solutions[i], false)
 			fmt.Println("$\\quad")
 		}
 	}
