@@ -13,13 +13,15 @@ type Gen02_SumSubOptionsStruct struct {
 	RandomSeed     int
 	EquationsCount int
 	MaxResult      int
+	Columns        int
 }
 
 var Gen02_SumSubOptions = Gen02_SumSubOptionsStruct{
 	WithAnswers:    false,
-	RandomSeed:     1,
-	EquationsCount: 40,
-	MaxResult:      20,
+	RandomSeed:     3,
+	EquationsCount: 50,
+	MaxResult:      30,
+	Columns:        3,
 }
 
 type equation struct {
@@ -33,8 +35,8 @@ func generate(equations []equation, r *rand.Rand) []equation {
 
 	for len(equations) < cap(equations) {
 
-		first := r.Intn(20)
-		second := r.Intn(20)
+		first := r.Intn(Gen02_SumSubOptions.MaxResult)
+		second := r.Intn(Gen02_SumSubOptions.MaxResult)
 
 		// too easy equation
 		if first == 0 || second == 0 {
@@ -44,7 +46,7 @@ func generate(equations []equation, r *rand.Rand) []equation {
 		var op string
 		var result int
 		// random operation
-		switch rand.Intn(2) {
+		switch r.Intn(2) {
 		case 0:
 			op = "-"
 			result = first - second
@@ -87,17 +89,20 @@ func Gen02_SumSub() {
 	fmt.Println("\\documentclass{article}")
 	fmt.Println("\\usepackage[margin=0.5in]{geometry}")
 	fmt.Println("\\usepackage{setspace}")
+	fmt.Println("\\usepackage{multicol}")
 	fmt.Println("\\begin{document}")
-	fmt.Println("\\huge")
+	fmt.Println("\\LARGE")
 
 	fmt.Printf("{\\small Seed: %d Count:%d}\n", seed, Gen02_SumSubOptions.EquationsCount)
-	fmt.Println("\\newline\\newline")
+	fmt.Println("\\newline")
 	fmt.Println("")
+
+	fmt.Printf("\\begin{multicols}{%v}\n", Gen02_SumSubOptions.Columns)
 
 	for i, s := range equations {
 
 		// draw equation
-		fmt.Printf("{\\small\\textbf %d)} ", i+1)
+		fmt.Printf("{\\scriptsize\\textbf %d)} ", i+1)
 		fmt.Print("$")
 
 		fmt.Printf("%v %v %v = ", s.First, s.Sign, s.Second)
@@ -108,8 +113,9 @@ func Gen02_SumSub() {
 
 		fmt.Println("$")
 
-		fmt.Println("\\newline")
+		fmt.Println("\\vskip 0.1in")
 	}
 
+	fmt.Println("\\end{multicols}")
 	fmt.Println("\\end{document}")
 }
