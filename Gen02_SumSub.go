@@ -2,7 +2,9 @@ package main
 
 import (
 	"fmt"
+	"golang.design/x/clipboard"
 	"math/rand"
+	"strings"
 	"time"
 )
 
@@ -18,8 +20,8 @@ type Gen02_SumSubOptionsStruct struct {
 
 var Gen02_SumSubOptions = Gen02_SumSubOptionsStruct{
 	WithAnswers:    false,
-	RandomSeed:     3,
-	EquationsCount: 50,
+	RandomSeed:     4,
+	EquationsCount: 69,	// 69 fit in one page
 	MaxResult:      30,
 	Columns:        3,
 }
@@ -56,7 +58,7 @@ func generate(equations []equation, r *rand.Rand) []equation {
 		}
 
 		// too complex equation
-		if result > Gen02_SumSubOptions.MaxResult || result < 0 {
+		if result < 0 || result > Gen02_SumSubOptions.MaxResult {
 			continue
 		}
 
@@ -86,36 +88,47 @@ func Gen02_SumSub() {
 
 	equations = generate(equations, r)
 
-	fmt.Println("\\documentclass{article}")
-	fmt.Println("\\usepackage[margin=0.5in]{geometry}")
-	fmt.Println("\\usepackage{setspace}")
-	fmt.Println("\\usepackage{multicol}")
-	fmt.Println("\\begin{document}")
-	fmt.Println("\\LARGE")
+	var sb strings.Builder
 
-	fmt.Printf("{\\small Seed: %d Count:%d}\n", seed, Gen02_SumSubOptions.EquationsCount)
-	fmt.Println("\\newline")
-	fmt.Println("")
+	sb.WriteString("\\documentclass{article}")
+	sb.WriteString("\\usepackage[margin=0.5in]{geometry}")
+	sb.WriteString("\\usepackage{setspace}")
+	sb.WriteString("\\usepackage{multicol}")
+	sb.WriteString("\\begin{document}")
+	sb.WriteString("\\LARGE")
 
-	fmt.Printf("\\begin{multicols}{%v}\n", Gen02_SumSubOptions.Columns)
+	sb.WriteString(fmt.Sprintf("{\\small Seed: %d Count:%d}\n", seed, Gen02_SumSubOptions.EquationsCount))
+	sb.WriteString("\\newline")
+	sb.WriteString("")
+
+	sb.WriteString(fmt.Sprintf("\\begin{multicols}{%v}\n", Gen02_SumSubOptions.Columns))
 
 	for i, s := range equations {
 
 		// draw equation
-		fmt.Printf("{\\scriptsize\\textbf %d)} ", i+1)
-		fmt.Print("$")
+		sb.WriteString(fmt.Sprintf("{\\scriptsize\\textbf %d)} ", i+1))
+		sb.WriteString("$")
 
-		fmt.Printf("%v %v %v = ", s.First, s.Sign, s.Second)
+		sb.WriteString(fmt.Sprintf("%v %v %v = ", s.First, s.Sign, s.Second))
 
 		if Gen02_SumSubOptions.WithAnswers {
-			fmt.Printf("%v", s.Result)
+			sb.WriteString(fmt.Sprintf("%v", s.Result))
 		}
 
-		fmt.Println("$")
+		sb.WriteString("$")
 
-		fmt.Println("\\vskip 0.1in")
+		sb.WriteString("\\vskip 0.1in")
 	}
 
-	fmt.Println("\\end{multicols}")
-	fmt.Println("\\end{document}")
+	sb.WriteString("\\end{multicols}")
+	sb.WriteString("\\end{document}")
+
+	err := clipboard.Init()
+	if err != nil {
+		panic(err)
+	}
+
+	clipboard.Write(clipboard.FmtText, []byte(sb.String()))
+
+	fmt.Println("Copied to clipboard!")
 }
